@@ -1,0 +1,8 @@
+{
+  "name": "ConsumerSaathi",
+  "description": "General Indian legal information chatbot providing statutory context, procedural guidance, and clear disclaimers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
