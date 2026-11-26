@@ -2,6 +2,28 @@ export const WELCOME_HEADING = 'Hi Consumer, how can I help you today?';
 export const WELCOME_SUBTITLE =
   'Ask me about your consumer rights and how to complain, based on the Consumer Protection Act, 2019 and the E-Commerce Rules, 2020.';
 
+export const WELCOME_SUBTITLE_HI =
+  'नमस्ते! मैं ConsumerSaathi हूँ। मैं उपभोक्ता संरक्षण अधिनियम, 2019 और ई-कॉमर्स नियम, 2020 के आधार पर आपके उपभोक्ता अधिकारों और शिकायत की प्रक्रिया को समझाने में मदद करता हूँ। आप क्या जानना चाहते हैं?';
+
+export const WELCOME_PLACEHOLDER_HI = 'उपभोक्ता कानून से जुड़ा प्रश्न पूछें...';
+
+export const HINDI_WELCOME_CHIPS: readonly string[] = [
+  'उपभोक्ता अधिकार',
+  'उपभोक्ता संरक्षण अधिनियम 2019',
+  'ई-कॉमर्स नियम 2020',
+  'रिफंड और वापसी',
+  'खराब उत्पाद',
+  'सेवा में कमी',
+  'ऑनलाइन खरीदारी की समस्याएँ',
+  'उत्पाद दायित्व',
+  'भ्रामक विज्ञापन',
+  'अनुचित व्यापार प्रथाएँ',
+  'शिकायत दर्ज करने की प्रक्रिया',
+  'उपभोक्ता आयोग',
+  'शिकायत की समय-सीमा',
+  'उपभोक्ता जागरूकता',
+];
+
 export const GREETING_CHAR_INTERVAL_MS = 45;
 export const GREETING_CURSOR_HOLD_MS = 1000;
 export const SUBTITLE_FADE_MS = 400;
@@ -23,7 +45,7 @@ export const WELCOME_PLACEHOLDERS = [
   'Ask a consumer law question...',
   'How long do I have to file a complaint?',
   'Can a website charge cancellation fees?',
-  'Which Commission handles my complaint?',
+  'Which Commission handles a complaint?',
 ] as const;
 
 export type StarterIconKind = 'defect' | 'ecommerce' | 'helpline' | 'commission';

@@ -1,14 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { KNOWLEDGE_BASE } from '../knowledgeBase.ts';
 import {
+  containsDevanagari,
   createBotMessage,
   createErrorBotMessage,
   createUserMessage,
   formatCitationLabel,
+  getPortalLinks,
+  loadFirstVisitAccepted,
+  loadStoredFontSize,
+  loadStoredHighContrast,
+  loadStoredLanguage,
   normalizeChatResponse,
+  saveFirstVisitAccepted,
+  saveStoredFontSize,
+  saveStoredHighContrast,
+  saveStoredLanguage,
   validateUserInput,
 } from './chatLogic.ts';
-import { CONSUMERSAATHI_DISCLAIMER, type ChatCitation, type ProcedureStep } from './types.ts';
+import {
+  CONSUMERSAATHI_DISCLAIMER,
+  CONSUMERSAATHI_DISCLAIMER_HI,
+  type ChatCitation,
+  type ProcedureStep,
+} from './types.ts';
 
 const SAMPLE_CITATION: ChatCitation = {
   document: 'Consumer Protection Act, 2019',
@@ -41,6 +57,7 @@ test('normalizeChatResponse parses valid backend response with citations, proced
     citations: [SAMPLE_CITATION],
     procedure: SAMPLE_PROCEDURE,
     disclaimer: CONSUMERSAATHI_DISCLAIMER,
+    suggestions: ['Consumer Rights', '  Defective Products  ', '', 123],
   });
 
   assert.equal(normalized.type, 'answer');
@@ -48,6 +65,7 @@ test('normalizeChatResponse parses valid backend response with citations, proced
   assert.deepEqual(normalized.citations, [SAMPLE_CITATION]);
   assert.deepEqual(normalized.procedure, SAMPLE_PROCEDURE);
   assert.equal(normalized.disclaimer, CONSUMERSAATHI_DISCLAIMER);
+  assert.deepEqual(normalized.suggestions, ['Consumer Rights', 'Defective Products']);
 });
 
 test('normalizeChatResponse falls back to canonical disclaimer if omitted', () => {
@@ -90,8 +108,66 @@ test('message builders and citation formatter produce expected structures', () =
   assert.equal(errMsg.isError, true);
   assert.equal(errMsg.response.disclaimer, CONSUMERSAATHI_DISCLAIMER);
 
+  const errMsgHi = createErrorBotMessage('संपर्क विफल', 'b-3', 'hi');
+  assert.equal(errMsgHi.response.lang, 'hi');
+  assert.equal(errMsgHi.response.disclaimer, CONSUMERSAATHI_DISCLAIMER_HI);
+
   assert.equal(
     formatCitationLabel(SAMPLE_CITATION),
     'Consumer Protection Act, 2019 · Section 2(10) · Ministry of Law and Justice',
   );
 });
+
+test('Hindi helpers detect Devanagari, default Hindi disclaimer, and handle missing localStorage safely', () => {
+  assert.equal(containsDevanagari('शिकायत की समय-सीमा'), true);
+  assert.equal(containsDevanagari('Consumer rights'), false);
+
+  // In Node environment without window, loadStoredLanguage / saveStoredLanguage must not throw
+  assert.equal(loadStoredLanguage(), 'en');
+  assert.doesNotThrow(() => saveStoredLanguage('hi'));
+
+  const hiNormalized = normalizeChatResponse({
+    type: 'answer',
+    answer: 'नीचे अधिनियम का संबंधित अंश दिया गया है।',
+    citations: [SAMPLE_CITATION],
+    procedure: SAMPLE_PROCEDURE,
+    lang: 'hi',
+  });
+  assert.equal(hiNormalized.lang, 'hi');
+  assert.equal(hiNormalized.disclaimer, CONSUMERSAATHI_DISCLAIMER_HI);
+});
+
+test('normalizeChatResponse preserves isClosestMatch flag on response and citations', () => {
+  const closestNormalized = normalizeChatResponse({
+    type: 'answer',
+    answer:
+      "I don't have an exact passage for that, but these are the closest parts of the Act. They may not fully answer your question.",
+    citations: [{ ...SAMPLE_CITATION, isClosestMatch: true }],
+    procedure: SAMPLE_PROCEDURE,
+    isClosestMatch: true,
+  });
+
+  assert.equal(closestNormalized.isClosestMatch, true);
+  assert.equal(closestNormalized.citations[0].isClosestMatch, true);
+});
+
+test('portal preference storage helpers and getPortalLinks work safely without window', () => {
+  assert.equal(loadStoredFontSize(), 16);
+  assert.doesNotThrow(() => saveStoredFontSize(20));
+
+  assert.equal(loadStoredHighContrast(), false);
+  assert.doesNotThrow(() => saveStoredHighContrast(true));
+
+  assert.equal(loadFirstVisitAccepted(), false);
+  assert.doesNotThrow(() => saveFirstVisitAccepted());
+
+  const links = getPortalLinks(KNOWLEDGE_BASE);
+  assert.equal(links.length, 3);
+  assert.equal(links[0].url, 'https://consumerhelpline.gov.in/');
+  assert.equal(links[1].url, 'https://edaakhil.nic.in');
+  assert.equal(
+    links[2].url,
+    'https://consumeraffairs.nic.in/acts-and-rules/consumer-protection',
+  );
+});
+

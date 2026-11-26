@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import type { ChatLanguage } from '../chat/types';
 import {
   getNextPlaceholderIndex,
   PLACEHOLDER_CYCLE_MS,
+  WELCOME_PLACEHOLDER_HI,
   WELCOME_PLACEHOLDERS,
 } from '../chat/welcomeMotion';
 import { SendArrowIcon } from './Icons';
 
 interface ChatComposerProps {
+  lang: ChatLanguage;
   value: string;
   isSending: boolean;
   isWelcomeActive: boolean;
@@ -15,6 +18,7 @@ interface ChatComposerProps {
 }
 
 export function ChatComposer({
+  lang,
   value,
   isSending,
   isWelcomeActive,
@@ -55,6 +59,15 @@ export function ChatComposer({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Escape') {
+      if (value.length > 0) {
+        event.preventDefault();
+        onChange('');
+      } else {
+        textareaRef.current?.blur();
+      }
+      return;
+    }
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       if (canSubmit) {
@@ -63,21 +76,29 @@ export function ChatComposer({
     }
   };
 
-  const activePlaceholder = isWelcomeActive
-    ? WELCOME_PLACEHOLDERS[placeholderIndex]
-    : WELCOME_PLACEHOLDERS[0];
+  const activePlaceholder =
+    lang === 'hi'
+      ? WELCOME_PLACEHOLDER_HI
+      : isWelcomeActive
+        ? WELCOME_PLACEHOLDERS[placeholderIndex]
+        : WELCOME_PLACEHOLDERS[0];
+
+  const isHi = lang === 'hi';
 
   return (
     <footer className="chat-composer-bar">
       <form className="chat-composer-form" onSubmit={handleFormSubmit} noValidate>
         <label htmlFor="chat-input" className="sr-only">
-          Ask ConsumerSaathi a general consumer law question
+          {isHi
+            ? WELCOME_PLACEHOLDER_HI
+            : 'Ask ConsumerSaathi a general consumer law question'}
         </label>
         <textarea
           ref={textareaRef}
           id="chat-input"
           className="chat-input"
           rows={1}
+          maxLength={1000}
           value={value}
           onFocus={() => setHasFocusedInput(true)}
           onChange={(event) => onChange(event.target.value)}
@@ -89,7 +110,15 @@ export function ChatComposer({
           type="submit"
           className="chat-send-btn"
           disabled={!canSubmit}
-          aria-label={isSending ? 'Sending message' : 'Send message'}
+          aria-label={
+            isHi
+              ? isSending
+                ? 'संदेश भेजा जा रहा है'
+                : 'संदेश भेजें'
+              : isSending
+                ? 'Sending message'
+                : 'Send message'
+          }
         >
           <SendArrowIcon />
         </button>

@@ -1,4 +1,4 @@
-import { processChatMessage } from '../server/chatHandler.ts';
+import { answer } from '../server/pipeline.ts';
 import { KNOWLEDGE_BASE } from '../src/knowledgeBase.ts';
 import type { ChatApiResponse } from '../src/chat/types.ts';
 
@@ -149,13 +149,10 @@ async function main() {
   let passed = 0;
 
   for (const testCase of EVAL_CASES) {
-    const result = await processChatMessage({ message: testCase.question }, KNOWLEDGE_BASE, null);
-    if (result.status !== 200) {
-      console.log(`FAIL [${testCase.id}] HTTP ${result.status}: ${testCase.question}`);
-      continue;
-    }
-
-    const body = result.body as ChatApiResponse;
+    const body: ChatApiResponse = await answer(testCase.question, 'en', undefined, {
+      passages: KNOWLEDGE_BASE,
+      geminiClient: null,
+    });
     const citedSections = body.citations.map((c) => c.section);
     let ok = false;
     let reason = '';

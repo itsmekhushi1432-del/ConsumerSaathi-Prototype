@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { CONSUMERSAATHI_DISCLAIMER } from '../chat/types';
+import {
+  CONSUMERSAATHI_DISCLAIMER,
+  CONSUMERSAATHI_DISCLAIMER_HI,
+  type ChatLanguage,
+} from '../chat/types';
 import {
   advanceRotatingState,
   CARD_STAGGER_MS,
@@ -8,15 +12,18 @@ import {
   getRotatingDelayMs,
   GREETING_CHAR_INTERVAL_MS,
   GREETING_CURSOR_HOLD_MS,
+  HINDI_WELCOME_CHIPS,
   ROTATING_PHRASES,
   SUBTITLE_FADE_MS,
   WELCOME_HEADING,
   WELCOME_STARTER_CARDS,
   WELCOME_SUBTITLE,
+  WELCOME_SUBTITLE_HI,
 } from '../chat/welcomeMotion';
 import { BalanceScaleIcon, StarterCardIcon } from './Icons';
 
 interface WelcomePanelProps {
+  lang: ChatLanguage;
   isSending: boolean;
   onSelectStarter: (prompt: string) => void;
 }
@@ -28,7 +35,7 @@ function getInitialReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function WelcomePanel({ isSending, onSelectStarter }: WelcomePanelProps) {
+export function WelcomePanel({ lang, isSending, onSelectStarter }: WelcomePanelProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(
     getInitialReducedMotion,
   );
@@ -148,6 +155,38 @@ export function WelcomePanel({ isSending, onSelectStarter }: WelcomePanelProps) 
     : WELCOME_HEADING.slice(0, greetingLength);
 
   const displayedRotatingText = getDisplayedRotatingText(rotatingState, ROTATING_PHRASES);
+
+  if (lang === 'hi') {
+    return (
+      <main className="welcome-panel" aria-label="ConsumerSaathi में आपका स्वागत है">
+        <div className="welcome-panel-inner">
+          <div className="welcome-hero">
+            <div className="welcome-avatar" aria-hidden="true">
+              <BalanceScaleIcon size={28} />
+            </div>
+            <h1 className="welcome-heading">ConsumerSaathi</h1>
+            <p className="welcome-subtitle welcome-subtitle-visible">{WELCOME_SUBTITLE_HI}</p>
+          </div>
+
+          <div className="welcome-hi-chips" role="group" aria-label="सुझाए गए विषय">
+            {HINDI_WELCOME_CHIPS.map((topic) => (
+              <button
+                key={topic}
+                type="button"
+                className="suggestion-chip"
+                onClick={() => onSelectStarter(topic)}
+                disabled={isSending}
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+
+          <p className="welcome-disclaimer">{CONSUMERSAATHI_DISCLAIMER_HI}</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="welcome-panel" aria-label="Welcome to ConsumerSaathi">

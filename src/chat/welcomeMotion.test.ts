@@ -45,7 +45,7 @@ test('welcome copy and timing constants match specification', () => {
     'Ask a consumer law question...',
     'How long do I have to file a complaint?',
     'Can a website charge cancellation fees?',
-    'Which Commission handles my complaint?',
+    'Which Commission handles a complaint?',
   ]);
   assert.equal(WELCOME_STARTER_CARDS.length, 4);
 });

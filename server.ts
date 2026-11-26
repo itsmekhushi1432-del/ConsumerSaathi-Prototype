@@ -1,9 +1,12 @@
+// Express entry point serving the Vite/static SPA and the /api/chat endpoint.
 import 'dotenv/config';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createGeminiClient, processChatMessage } from './server/chatHandler.ts';
+import { answer } from './server/pipeline.ts';
+import { buildFriendlyGuidanceResponse } from './server/safety.ts';
+import type { ChatLanguage } from './src/chat/types.ts';
 import { KNOWLEDGE_BASE } from './src/knowledgeBase.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,18 +18,39 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Initialize server-only @google/genai client when GEMINI_API_KEY is present in env.
-  const geminiClient = createGeminiClient(process.env.GEMINI_API_KEY);
-  app.locals.geminiClient = geminiClient;
-
   app.get('/api/kb-count', (_req, res) => {
     res.json({ count: KNOWLEDGE_BASE.length });
   });
 
   app.post('/api/chat', async (req, res) => {
-    const result = await processChatMessage(req.body, KNOWLEDGE_BASE, geminiClient);
-    res.status(result.status).json(result.body);
+    const body = req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
+    const lang: ChatLanguage = body.lang === 'hi' ? 'hi' : 'en';
+    const message = typeof body.message === 'string' ? body.message : '';
+    const previousQuestion =
+      typeof body.previousQuestion === 'string' ? body.previousQuestion : undefined;
+
+    try {
+      const reply = await answer(message, lang, previousQuestion);
+      res.status(200).json(reply);
+    } catch {
+      res.status(200).json(buildFriendlyGuidanceResponse(lang));
+    }
   });
+
+  app.use(
+    (
+      err: unknown,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (err && req.path === '/api/chat') {
+        res.status(200).json(buildFriendlyGuidanceResponse('en'));
+        return;
+      }
+      next(err);
+    },
+  );
 
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
